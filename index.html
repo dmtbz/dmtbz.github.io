@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <h1>Sensors</h1>
+    <div>
+        <canvas id="field1"></canvas>
+        <canvas id="field2"></canvas>
+        <canvas id="field3"></canvas>
+        <canvas id="field4"></canvas>
+        <script>
+            function addData(chart, data) {
+                chart.data.labels.push(label);
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data.push(data);
+                });
+                chart.update();
+            }
+
+            function removeData(chart) {
+                chart.data.labels.pop();
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data.pop();
+                });
+                chart.update();
+            }
+
+            function createChart(data, labels, label, field) {
+                var data = {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        backgroundColor: 'rgb(255, 99, 132)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: data,
+                    }]
+                };
+
+                var config = {
+                    type: 'line',
+                    data: data,
+                    options: {}
+                };
+
+                var chart = new Chart(
+                    document.getElementById(field),
+                    config
+                );
+                return chart;
+            }
+
+            var last_entry_id = 0;
+            var chart1;
+            var chart2;
+            var chart3;
+            var chart4;
+
+            setInterval(function () {
+            var req = fetch("https://api.thingspeak.com/channels/1673175/feeds.json?api_key=5GVF500YBCIEU43P").then(response => response.json())
+                .then(json => {
+                    if (json['channel']['last_entry_id'] > last_entry_id) {
+                        last_entry_id = json['channel']['last_entry_id'];
+                        var feeds = json['feeds'];
+                        if (!chart1) {
+                            var labels = new Array();
+                            var datafield1 = new Array();
+                            var datafield1title = json['channel']['field1'];
+                            var datafield2 = new Array();
+                            var datafield2title = json['channel']['field2'];
+                            var datafield3 = new Array();
+                            var datafield3title = json['channel']['field3'];
+                            var datafield4 = new Array();
+                            var datafield4title = json['channel']['field4'];
+                            feeds.forEach(element => {
+                                labels.push(element['created_at'])
+                                datafield1.push(element['field1'])
+                                datafield2.push(element['field2'])
+                                datafield3.push(element['field3'])
+                                datafield4.push(element['field4'])
+                            });
+                            console.log(feeds.length)
+                            console.log(labels)
+                            console.log(json)
+                            console.log(datafield1)
+                            console.log(datafield1title)
+                            console.log(datafield2title)
+                            console.log(datafield3title)
+                            console.log(datafield4title)
+
+                            chart1 = createChart(datafield1, labels, datafield1title, 'field1')
+                            chart2 = createChart(datafield2, labels, datafield2title, 'field2')
+                            chart3 = createChart(datafield3, labels, datafield3title, 'field3')
+                            chart4 = createChart(datafield4, labels, datafield4title, 'field4')
+                        } else {
+                            var datafield1 = new Array();
+                            var datafield2 = new Array();
+                            var datafield3 = new Array();
+                            var datafield4 = new Array();
+                            feeds.forEach(element => {
+                                if (element['entry_id'] > last_entry_id) {
+                                    datafield1.push(element['field1'])
+                                    datafield2.push(element['field2'])
+                                    datafield3.push(element['field3'])
+                                    datafield4.push(element['field4'])
+                                }
+                            });
+                            addData(chart1, datafield1);
+                            addData(chart2, datafield2);
+                            addData(chart3, datafield3);
+                            addData(chart4, datafield4);
+                        }
+                    }
+                });
+            }, 2000);
+        </script>
+    </div>
+</body>
+
+</html>
